@@ -1,107 +1,226 @@
-# Claude Export Plugin
+# Claude Export Plugin for RuneLite
 
-Export your Old School RuneScape game data to JSON files for use with Claude AI via Model Context Protocol (MCP).
+Export your OSRS account data in formats optimized for Claude AI conversations and MCP integration.
+
+## Why This Plugin?
+
+Unlike generic data exporters, this plugin is **specifically designed for AI/LLM integration**:
+
+- **Claude-Optimized Formats**: Exports include human-readable summaries and metadata that help Claude understand your account
+- **One-Click Copy**: Copy your entire account summary formatted for pasting directly into Claude
+- **Prompt Generation**: Generate starter prompts with your data ready for Claude conversations
+- **MCP Server Integration**: Works with companion MCP servers for real-time Claude Desktop integration
+- **Combined Context**: Single JSON file with all your data and metadata, ready for AI analysis
+
+## Use Cases
+
+Ask Claude for personalized OSRS advice:
+
+- **Quest Planning**: "Based on my stats, what's the most efficient quest order?"
+- **Gear Optimization**: "What upgrades should I prioritize for my budget?"
+- **Account Reviews**: "Analyze my account and suggest goals"
+- **Training Guides**: "What's the best way to train Slayer with my combat stats?"
+- **Money Making**: "What money makers are available at my levels?"
 
 ## Features
 
-This plugin exports the following OSRS data to JSON files:
+### Claude AI Integration
 
-- **Bank** - All items in your bank with quantities and Grand Exchange prices
+| Feature | Description |
+|---------|-------------|
+| **Copy for Claude** | One-click copy of your formatted account summary to paste into any Claude conversation |
+| **Generate Claude Prompt** | Creates a starter prompt with your data and suggested questions |
+| **Export Claude Context** | Combined JSON file (`claude-context.json`) with metadata for MCP servers |
+
+### Data Export
+
+Export the following OSRS data to JSON files:
+
+- **Skills** - All skill levels, XP, boosted levels, total level, and combat level
+- **Quests** - Completion status for all quests with summary counts
+- **Bank** - All items with quantities, GE prices, and total bank value
 - **Inventory** - Current inventory contents with slot positions
-- **Equipment** - All equipped items
-- **Quests** - Quest completion status for all quests
-- **Skills** - Skill levels, XP, and boosted levels
+- **Equipment** - All equipped items with prices
 
-All data is exported to `~/.runelite/claude-export/` directory for easy access by MCP servers.
+### Auto Export Options
 
-## Use Case
+- **On Login** - Automatically export skills and quests when logging in
+- **On Change** - Export when bank/inventory/equipment changes
+- **Interval** - Export all data every X minutes (configurable, 0-60 minutes)
 
-This plugin is designed to work with Claude AI's Model Context Protocol (MCP). By exporting your OSRS data to JSON files, you can use an MCP server to let Claude read your game data and provide helpful assistance with:
+## Installation
 
-- Inventory management and bank organization
-- Quest planning and completion tracking
-- Skill training recommendations
-- Equipment optimization
-- Item price lookups and wealth tracking
+### From Plugin Hub
+1. Open RuneLite
+2. Go to the Plugin Hub (wrench icon)
+3. Search for "Claude Export"
+4. Click Install
+
+### Manual Installation
+1. Download the latest release JAR
+2. Place in `~/.runelite/plugins/`
+3. Restart RuneLite
 
 ## How to Use
 
-### Panel Interface
+### Quick Start: Copy for Claude
 
-The plugin adds a sidebar panel with the following buttons:
+1. Log into OSRS
+2. Click the Claude Export panel icon in the sidebar
+3. Click **"Copy for Claude"**
+4. Paste into any Claude conversation (claude.ai, Claude Desktop, API)
+5. Ask Claude for advice!
 
-- **Export All Data** - Exports bank, inventory, equipment, quests, and skills all at once
-- **Export Bank** - Export only bank contents (requires bank to be open)
-- **Export Inventory** - Export current inventory
-- **Export Equipment** - Export equipped items
-- **Export Quests** - Export quest completion status
-- **Export Skills** - Export skill levels and XP
-- **Open Export Folder** - Opens the export directory in your file manager
+### Example Output
 
-### Configuration
+When you click "Copy for Claude", you get a formatted summary like this:
 
-In the plugin configuration, you can enable:
+```
+=== OSRS Account Summary for Claude ===
+Username: YourName
+Total Level: 1547
+Combat Level: 98
 
-- **Auto-export on login** - Automatically export all data when you log in
-- **Auto-export on change** - Automatically export when bank/inventory/equipment changes
-- **Include GE prices** - Include Grand Exchange prices in item exports (enabled by default)
+SKILLS:
+Attack 75 | Strength 80 | Defence 70 | Hitpoints 77 | Ranged 82 | Prayer 55 | Magic 85
+Cooking 70 | Woodcutting 65 | Fletching 70 | Fishing 60
+...
 
-## Export Format
+COMPLETED QUESTS (87):
+Dragon Slayer I, Monkey Madness I, Recipe for Disaster, ...
 
-All exports include:
-- Username
-- Timestamp (ISO 8601 format)
-- Relevant game data
+BANK SUMMARY:
+Total Value: ~45.2M GP
+Total Items: 342 unique stacks
+Notable Items: Bandos chestplate, Abyssal whip, Dragon boots x2
 
-### Example Bank Export
+CURRENT INVENTORY:
+Coins (2,500,000), Shark x20, Super combat potion(4) x4
+
+EQUIPPED GEAR:
+Head: Slayer helmet (i), Body: Fighter torso, Legs: Obsidian platelegs, ...
+```
+
+### Generate Claude Prompt
+
+Click **"Generate Claude Prompt"** to get a ready-to-use prompt:
+
+```
+Here is my OSRS (Old School RuneScape) account data. I'm looking for advice to improve my account.
+
+[Your account data here]
+
+Based on my current stats, quest progress, and gear, can you help me with:
+1. What quests should I prioritize next for good rewards?
+2. Any gear upgrades I should work toward given my levels?
+3. Efficient training methods for skills I should focus on?
+4. Any account goals or milestones I should aim for?
+```
+
+## MCP Server Integration
+
+For real-time integration with Claude Desktop, this plugin works with MCP (Model Context Protocol) servers.
+
+### How It Works
+
+1. This plugin exports data to `~/.runelite/claude-export/`
+2. An MCP server reads these JSON files
+3. Claude Desktop connects to the MCP server
+4. Claude can access your live OSRS data during conversations
+
+### Setting Up MCP
+
+1. Install the companion MCP server (see plugin settings for repository link)
+2. Configure Claude Desktop to use the MCP server
+3. Enable auto-export in plugin settings
+4. Claude can now read your game data in real-time!
+
+## Configuration
+
+Access settings via RuneLite's configuration panel:
+
+### Auto Export
+- **Auto-export on login** - Export skills/quests after logging in
+- **Auto-export on change** - Export when inventory/bank/equipment changes
+- **Auto-export interval** - Export all data every X minutes (0 = disabled)
+
+### Export Options
+- **Include GE prices** - Include Grand Exchange prices in exports
+- **Export Claude context file** - Also create combined `claude-context.json`
+
+### MCP Integration
+- **MCP Server Repository** - URL to your MCP server for reference
+
+## Export Files
+
+All files are saved to `~/.runelite/claude-export/`:
+
+| File | Description |
+|------|-------------|
+| `skills.json` | Skill levels, XP, and combat stats |
+| `quests.json` | Quest completion status with summary |
+| `bank.json` | Bank contents with values |
+| `inventory.json` | Current inventory |
+| `equipment.json` | Equipped items |
+| `claude-context.json` | **Combined file with all data + metadata** |
+
+### Claude Context File Format
+
+The `claude-context.json` file is specially formatted for AI consumption:
 
 ```json
 {
-  "username": "PlayerName",
-  "timestamp": "2024-01-02T18:30:00Z",
-  "items": [
-    {
-      "id": 995,
-      "name": "Coins",
-      "quantity": 1000000,
-      "price": 1,
-      "tab": 0
+  "_meta": {
+    "description": "OSRS account data exported for Claude AI integration via MCP",
+    "plugin": "Claude Export Plugin for RuneLite",
+    "version": "1.1.0",
+    "exportTime": "2026-01-02T15:30:00Z",
+    "fields": {
+      "skills": "Player skill levels, XP, and boosted levels",
+      "quests": "Quest completion status (NOT_STARTED, IN_PROGRESS, FINISHED)",
+      ...
     }
-  ]
+  },
+  "_summary": "Username: Player | Total Level: 1547 | Combat: 98 | Quests: 87/158 complete | Bank Value: 45.2M GP",
+  "username": "Player",
+  "totalLevel": 1547,
+  "combatLevel": 98,
+  "skills": { ... },
+  "quests": { ... },
+  "bank": { ... },
+  "inventory": { ... },
+  "equipment": { ... }
 }
 ```
 
-## Integration with MCP
+## File Locations
 
-To use this data with Claude AI:
-
-1. Install an MCP server that reads from `~/.runelite/claude-export/`
-2. Configure the MCP server in your Claude Desktop app or API integration
-3. Claude can now read your OSRS game data to provide personalized assistance
-
-## Export Location
-
-All JSON files are saved to:
 - **Windows**: `%USERPROFILE%\.runelite\claude-export\`
-- **macOS/Linux**: `~/.runelite/claude-export/`
-
-## Files Exported
-
-- `bank.json` - Bank contents
-- `inventory.json` - Inventory contents
-- `equipment.json` - Equipped items
-- `quests.json` - Quest statuses
-- `skills.json` - Skill levels and XP
+- **macOS**: `~/.runelite/claude-export/`
+- **Linux**: `~/.runelite/claude-export/`
 
 ## Requirements
 
 - RuneLite client
 - Old School RuneScape account
+- (Optional) Claude Desktop with MCP for real-time integration
+
+## Privacy & Security
+
+- All data is stored locally on your computer
+- No data is sent to external servers by this plugin
+- You control when and what to share with Claude
+- Bank values use public GE prices only
 
 ## Support
 
-For issues or feature requests, please visit the plugin's GitHub repository.
+For issues, feature requests, or contributions:
+- GitHub: https://github.com/Nichster/claude-export-plugin
 
 ## License
 
-This plugin is open source and follows RuneLite's plugin guidelines.
+BSD 2-Clause License - See LICENSE file for details.
+
+---
+
+*This plugin is not affiliated with Jagex, Old School RuneScape, or Anthropic. RuneLite is a third-party client.*
