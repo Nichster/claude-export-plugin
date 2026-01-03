@@ -15,12 +15,6 @@ public class ClaudeExportPanel extends PluginPanel {
     private final ClaudeExportPlugin plugin;
     private JLabel statusLabel;
     private JLabel lastExportLabel;
-    private Timer statusResetTimer;
-
-    // Colors
-    private static final Color CLAUDE_ORANGE = new Color(217, 119, 87);
-    private static final Color CLAUDE_DARK = new Color(41, 37, 36);
-    private static final Color SUCCESS_GREEN = new Color(76, 175, 80);
 
     public ClaudeExportPanel(ClaudeExportPlugin plugin) {
         super(false);
@@ -29,38 +23,193 @@ public class ClaudeExportPanel extends PluginPanel {
         setLayout(new BorderLayout());
         setBackground(ColorScheme.DARK_GRAY_COLOR);
 
-        // Main container with scroll
-        JPanel mainContainer = new JPanel();
-        mainContainer.setLayout(new BoxLayout(mainContainer, BoxLayout.Y_AXIS));
-        mainContainer.setBackground(ColorScheme.DARK_GRAY_COLOR);
-        mainContainer.setBorder(new EmptyBorder(10, 10, 10, 10));
+        JPanel mainPanel = new JPanel();
+        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+        mainPanel.setBackground(ColorScheme.DARK_GRAY_COLOR);
+        mainPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
 
-        // Header section
-        mainContainer.add(createHeaderSection());
-        mainContainer.add(Box.createRigidArea(new Dimension(0, 15)));
+        // Title
+        JLabel title = new JLabel("Claude Export");
+        title.setForeground(Color.WHITE);
+        title.setFont(title.getFont().deriveFont(Font.BOLD, 16f));
+        title.setAlignmentX(Component.LEFT_ALIGNMENT);
+        mainPanel.add(title);
 
-        // Claude AI section (the main differentiator)
-        mainContainer.add(createClaudeSection());
-        mainContainer.add(Box.createRigidArea(new Dimension(0, 15)));
+        JLabel subtitle = new JLabel("Export OSRS data for Claude AI");
+        subtitle.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+        subtitle.setFont(subtitle.getFont().deriveFont(11f));
+        subtitle.setAlignmentX(Component.LEFT_ALIGNMENT);
+        mainPanel.add(subtitle);
+        mainPanel.add(Box.createVerticalStrut(15));
 
-        // Export buttons section
-        mainContainer.add(createExportSection());
-        mainContainer.add(Box.createRigidArea(new Dimension(0, 15)));
+        // Claude AI Section
+        mainPanel.add(createSectionHeader("CLAUDE AI"));
+        mainPanel.add(Box.createVerticalStrut(5));
 
-        // File management section
-        mainContainer.add(createFileSection());
-        mainContainer.add(Box.createRigidArea(new Dimension(0, 15)));
+        JButton copyBtn = createButton("Copy for Claude", ColorScheme.BRAND_ORANGE);
+        copyBtn.setToolTipText("<html>Copy a formatted summary of your account<br>optimized for pasting into Claude AI conversations</html>");
+        copyBtn.addActionListener(e -> {
+            String text = plugin.generateClaudeSummary();
+            copyToClipboard(text);
+            showButtonFeedback(copyBtn, "Copied!");
+        });
+        mainPanel.add(copyBtn);
+        mainPanel.add(Box.createVerticalStrut(5));
 
-        // MCP Info section
-        mainContainer.add(createMcpSection());
-        mainContainer.add(Box.createRigidArea(new Dimension(0, 15)));
+        JButton promptBtn = createButton("Generate Prompt", ColorScheme.BRAND_ORANGE);
+        promptBtn.setToolTipText("<html>Copy a starter prompt with your account data<br>that you can paste directly into Claude</html>");
+        promptBtn.addActionListener(e -> {
+            String text = plugin.generateClaudePrompt();
+            copyToClipboard(text);
+            showButtonFeedback(promptBtn, "Copied!");
+        });
+        mainPanel.add(promptBtn);
+        mainPanel.add(Box.createVerticalStrut(15));
 
-        // Status section
-        JPanel statusSection = createStatusSection();
-        mainContainer.add(statusSection);
+        // Export Data Section
+        mainPanel.add(createSectionHeader("EXPORT DATA"));
+        mainPanel.add(Box.createVerticalStrut(5));
 
-        // Wrap in scroll pane
-        JScrollPane scrollPane = new JScrollPane(mainContainer);
+        JButton exportAllBtn = createButton("Export All", ColorScheme.DARKER_GRAY_COLOR);
+        exportAllBtn.setToolTipText("Export all data (skills, quests, bank, inventory, equipment) to JSON files");
+        exportAllBtn.addActionListener(e -> {
+            plugin.exportAll();
+            showButtonFeedback(exportAllBtn, "Exported!");
+        });
+        mainPanel.add(exportAllBtn);
+        mainPanel.add(Box.createVerticalStrut(5));
+
+        JButton contextBtn = createButton("Export Context", ColorScheme.DARKER_GRAY_COLOR);
+        contextBtn.setToolTipText("Export a combined claude-context.json file with all data and metadata");
+        contextBtn.addActionListener(e -> {
+            plugin.exportClaudeContext();
+            showButtonFeedback(contextBtn, "Exported!");
+        });
+        mainPanel.add(contextBtn);
+        mainPanel.add(Box.createVerticalStrut(8));
+
+        // Individual export buttons - row 1
+        JPanel row1 = new JPanel(new GridLayout(1, 3, 4, 0));
+        row1.setBackground(ColorScheme.DARK_GRAY_COLOR);
+        row1.setMaximumSize(new Dimension(Integer.MAX_VALUE, 24));
+        row1.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JButton skillsBtn = createSmallButton("Skills", e -> { plugin.exportSkills(); updateStatus("Skills exported"); });
+        skillsBtn.setToolTipText("Export skill levels and XP only");
+        row1.add(skillsBtn);
+
+        JButton questsBtn = createSmallButton("Quests", e -> { plugin.exportQuests(); updateStatus("Quests exported"); });
+        questsBtn.setToolTipText("Export quest progress only");
+        row1.add(questsBtn);
+
+        JButton bankBtn = createSmallButton("Bank", e -> { plugin.exportBank(); updateStatus("Bank exported"); });
+        bankBtn.setToolTipText("Export bank contents (must have bank open)");
+        row1.add(bankBtn);
+
+        mainPanel.add(row1);
+        mainPanel.add(Box.createVerticalStrut(4));
+
+        // Individual export buttons - row 2
+        JPanel row2 = new JPanel(new GridLayout(1, 3, 4, 0));
+        row2.setBackground(ColorScheme.DARK_GRAY_COLOR);
+        row2.setMaximumSize(new Dimension(Integer.MAX_VALUE, 24));
+        row2.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JButton invBtn = createSmallButton("Inventory", e -> { plugin.exportInventory(); updateStatus("Inventory exported"); });
+        invBtn.setToolTipText("Export current inventory only");
+        row2.add(invBtn);
+
+        JButton equipBtn = createSmallButton("Equipment", e -> { plugin.exportEquipment(); updateStatus("Equipment exported"); });
+        equipBtn.setToolTipText("Export equipped items only");
+        row2.add(equipBtn);
+
+        row2.add(Box.createHorizontalGlue());
+        mainPanel.add(row2);
+        mainPanel.add(Box.createVerticalStrut(15));
+
+        // Files Section
+        mainPanel.add(createSectionHeader("FILES"));
+        mainPanel.add(Box.createVerticalStrut(5));
+
+        JButton openBtn = createButton("Open Folder", ColorScheme.DARKER_GRAY_COLOR);
+        openBtn.setToolTipText("Open the export folder in your file browser");
+        openBtn.addActionListener(e -> {
+            try {
+                Desktop.getDesktop().open(new File(plugin.getExportPath()));
+            } catch (Exception ex) {
+                updateStatus("Cannot open folder");
+            }
+        });
+        mainPanel.add(openBtn);
+        mainPanel.add(Box.createVerticalStrut(5));
+
+        JButton pathBtn = createButton("Copy Path", ColorScheme.DARKER_GRAY_COLOR);
+        pathBtn.setToolTipText("Copy the export folder path to clipboard");
+        pathBtn.addActionListener(e -> {
+            copyToClipboard(plugin.getExportPath());
+            showButtonFeedback(pathBtn, "Copied!");
+        });
+        mainPanel.add(pathBtn);
+        mainPanel.add(Box.createVerticalStrut(15));
+
+        // MCP Integration Section
+        mainPanel.add(createSectionHeader("MCP INTEGRATION"));
+        mainPanel.add(Box.createVerticalStrut(5));
+
+        JLabel mcpDesc = new JLabel("<html><body style='width: 190px'>" +
+            "Connect Claude Desktop to your OSRS data in real-time using MCP." +
+            "</body></html>");
+        mcpDesc.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+        mcpDesc.setFont(mcpDesc.getFont().deriveFont(11f));
+        mcpDesc.setAlignmentX(Component.LEFT_ALIGNMENT);
+        mainPanel.add(mcpDesc);
+        mainPanel.add(Box.createVerticalStrut(5));
+
+        JButton setupBtn = createButton("View Setup Guide", ColorScheme.DARKER_GRAY_COLOR);
+        setupBtn.setToolTipText("Open MCP server setup instructions on GitHub");
+        setupBtn.addActionListener(e -> {
+            try {
+                Desktop.getDesktop().browse(new URI("https://github.com/Nichster/claude-export-plugin/blob/master/MCP_SETUP.md"));
+            } catch (Exception ex) {
+                copyToClipboard("https://github.com/Nichster/claude-export-plugin/blob/master/MCP_SETUP.md");
+                showButtonFeedback(setupBtn, "URL Copied!");
+            }
+        });
+        mainPanel.add(setupBtn);
+        mainPanel.add(Box.createVerticalStrut(15));
+
+        // Status Section
+        mainPanel.add(createSectionHeader("STATUS"));
+        mainPanel.add(Box.createVerticalStrut(5));
+
+        JPanel statusPanel = new JPanel();
+        statusPanel.setLayout(new BoxLayout(statusPanel, BoxLayout.Y_AXIS));
+        statusPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+        statusPanel.setBorder(new EmptyBorder(8, 10, 8, 10));
+        statusPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        statusPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
+
+        statusLabel = new JLabel("Ready");
+        statusLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+        statusLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        statusPanel.add(statusLabel);
+
+        lastExportLabel = new JLabel("Last export: Never");
+        lastExportLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+        lastExportLabel.setFont(lastExportLabel.getFont().deriveFont(10f));
+        lastExportLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        statusPanel.add(lastExportLabel);
+
+        JLabel pathLabel = new JLabel("~/.runelite/claude-export/");
+        pathLabel.setForeground(ColorScheme.MEDIUM_GRAY_COLOR);
+        pathLabel.setFont(pathLabel.getFont().deriveFont(10f));
+        pathLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        statusPanel.add(pathLabel);
+
+        mainPanel.add(statusPanel);
+
+        // Scroll pane
+        JScrollPane scrollPane = new JScrollPane(mainPanel);
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setBorder(null);
@@ -69,247 +218,34 @@ public class ClaudeExportPanel extends PluginPanel {
         add(scrollPane, BorderLayout.CENTER);
     }
 
-    private JPanel createHeaderSection() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(ColorScheme.DARK_GRAY_COLOR);
-
-        JLabel titleLabel = new JLabel("Claude Export");
-        titleLabel.setForeground(Color.WHITE);
-        titleLabel.setFont(titleLabel.getFont().deriveFont(Font.BOLD, 16f));
-        panel.add(titleLabel, BorderLayout.NORTH);
-
-        JLabel descLabel = new JLabel("<html>Export OSRS data in Claude AI-optimized formats.</html>");
-        descLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-        descLabel.setBorder(new EmptyBorder(5, 0, 0, 0));
-        panel.add(descLabel, BorderLayout.CENTER);
-
-        return panel;
+    private JLabel createSectionHeader(String text) {
+        JLabel label = new JLabel(text);
+        label.setForeground(ColorScheme.BRAND_ORANGE);
+        label.setFont(label.getFont().deriveFont(Font.BOLD, 10f));
+        label.setAlignmentX(Component.LEFT_ALIGNMENT);
+        return label;
     }
 
-    private JPanel createClaudeSection() {
-        JPanel panel = createSectionPanel("Claude AI Integration");
-
-        // Copy for Claude button (main feature)
-        JButton copyForClaudeBtn = createPrimaryButton("Copy for Claude", e -> {
-            String summary = plugin.generateClaudeSummary();
-            copyToClipboard(summary);
-            showSuccess("Copied to clipboard!");
-        });
-        copyForClaudeBtn.setToolTipText("Copy a formatted account summary to paste into Claude");
-        panel.add(copyForClaudeBtn);
-        panel.add(Box.createRigidArea(new Dimension(0, 5)));
-
-        // Generate Prompt button
-        JButton generatePromptBtn = createPrimaryButton("Generate Claude Prompt", e -> {
-            String prompt = plugin.generateClaudePrompt();
-            copyToClipboard(prompt);
-            showSuccess("Prompt copied to clipboard!");
-        });
-        generatePromptBtn.setToolTipText("Generate a starter prompt with your data for Claude");
-        panel.add(generatePromptBtn);
-        panel.add(Box.createRigidArea(new Dimension(0, 5)));
-
-        // Export Claude Context button
-        JButton exportContextBtn = createSecondaryButton("Export Claude Context", e -> {
-            plugin.exportClaudeContext();
-            showSuccess("Exported claude-context.json!");
-        });
-        exportContextBtn.setToolTipText("Export combined JSON file with metadata for MCP");
-        panel.add(exportContextBtn);
-
-        return panel;
-    }
-
-    private JPanel createExportSection() {
-        JPanel panel = createSectionPanel("Export Data");
-
-        // Export All button
-        JButton exportAllBtn = createSecondaryButton("Export All Data", e -> {
-            plugin.exportAll();
-            showSuccess("Exported all data!");
-        });
-        panel.add(exportAllBtn);
-        panel.add(Box.createRigidArea(new Dimension(0, 8)));
-
-        // Individual export buttons in a grid
-        JPanel gridPanel = new JPanel(new GridLayout(3, 2, 5, 5));
-        gridPanel.setBackground(ColorScheme.DARK_GRAY_COLOR);
-        gridPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 100));
-
-        gridPanel.add(createSmallButton("Skills", e -> {
-            plugin.exportSkills();
-            showSuccess("Exported skills!");
-        }));
-        gridPanel.add(createSmallButton("Quests", e -> {
-            plugin.exportQuests();
-            showSuccess("Exported quests!");
-        }));
-        gridPanel.add(createSmallButton("Bank", e -> {
-            plugin.exportBank();
-            showSuccess("Exported bank!");
-        }));
-        gridPanel.add(createSmallButton("Inventory", e -> {
-            plugin.exportInventory();
-            showSuccess("Exported inventory!");
-        }));
-        gridPanel.add(createSmallButton("Equipment", e -> {
-            plugin.exportEquipment();
-            showSuccess("Exported equipment!");
-        }));
-
-        panel.add(gridPanel);
-
-        return panel;
-    }
-
-    private JPanel createFileSection() {
-        JPanel panel = createSectionPanel("Files");
-
-        // Open Folder button
-        JButton openFolderBtn = createSecondaryButton("Open Export Folder", e -> {
-            try {
-                Desktop.getDesktop().open(new File(plugin.getExportPath()));
-            } catch (Exception ex) {
-                showError("Could not open folder");
-            }
-        });
-        panel.add(openFolderBtn);
-        panel.add(Box.createRigidArea(new Dimension(0, 5)));
-
-        // Copy Path button
-        JButton copyPathBtn = createSecondaryButton("Copy Folder Path", e -> {
-            copyToClipboard(plugin.getExportPath());
-            showSuccess("Path copied!");
-        });
-        panel.add(copyPathBtn);
-
-        return panel;
-    }
-
-    private JPanel createMcpSection() {
-        JPanel panel = createSectionPanel("MCP Integration");
-
-        JLabel infoLabel = new JLabel("<html><small>This plugin works with Claude MCP Server for real-time Claude Desktop integration.</small></html>");
-        infoLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-        infoLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        panel.add(infoLabel);
-        panel.add(Box.createRigidArea(new Dimension(0, 8)));
-
-        // MCP Server link button
-        JButton mcpLinkBtn = createLinkButton("View MCP Server Setup", e -> {
-            try {
-                Desktop.getDesktop().browse(new URI(plugin.getMcpServerUrl()));
-            } catch (Exception ex) {
-                copyToClipboard(plugin.getMcpServerUrl());
-                showSuccess("URL copied to clipboard!");
-            }
-        });
-        panel.add(mcpLinkBtn);
-
-        return panel;
-    }
-
-    private JPanel createStatusSection() {
-        JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-        panel.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(ColorScheme.MEDIUM_GRAY_COLOR, 1),
-            new EmptyBorder(8, 10, 8, 10)
-        ));
-        panel.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        // Status label
-        statusLabel = new JLabel("Ready to export");
-        statusLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-        statusLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        panel.add(statusLabel);
-
-        panel.add(Box.createRigidArea(new Dimension(0, 5)));
-
-        // Last export label
-        lastExportLabel = new JLabel("Last export: Never");
-        lastExportLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-        lastExportLabel.setFont(lastExportLabel.getFont().deriveFont(Font.PLAIN, 11f));
-        lastExportLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        panel.add(lastExportLabel);
-
-        panel.add(Box.createRigidArea(new Dimension(0, 5)));
-
-        // Path label
-        JLabel pathLabel = new JLabel("<html><small>Path: ~/.runelite/claude-export/</small></html>");
-        pathLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-        pathLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        panel.add(pathLabel);
-
-        return panel;
-    }
-
-    private JPanel createSectionPanel(String title) {
-        JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setBackground(ColorScheme.DARK_GRAY_COLOR);
-        panel.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        JLabel titleLabel = new JLabel(title);
-        titleLabel.setForeground(CLAUDE_ORANGE);
-        titleLabel.setFont(titleLabel.getFont().deriveFont(Font.BOLD, 12f));
-        titleLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        titleLabel.setBorder(new EmptyBorder(0, 0, 5, 0));
-        panel.add(titleLabel);
-
-        return panel;
-    }
-
-    private JButton createPrimaryButton(String text, java.awt.event.ActionListener listener) {
+    private JButton createButton(String text, Color bgColor) {
         JButton button = new JButton(text);
         button.setAlignmentX(Component.LEFT_ALIGNMENT);
-        button.setMaximumSize(new Dimension(Integer.MAX_VALUE, 32));
-        button.setBackground(CLAUDE_ORANGE);
+        button.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
+        button.setBackground(bgColor);
         button.setForeground(Color.WHITE);
         button.setFocusPainted(false);
-        button.setBorderPainted(false);
-        button.setFont(button.getFont().deriveFont(Font.BOLD));
-        button.addActionListener(listener);
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        return button;
-    }
-
-    private JButton createSecondaryButton(String text, java.awt.event.ActionListener listener) {
-        JButton button = new JButton(text);
-        button.setAlignmentX(Component.LEFT_ALIGNMENT);
-        button.setMaximumSize(new Dimension(Integer.MAX_VALUE, 28));
-        button.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-        button.setForeground(Color.WHITE);
-        button.setFocusPainted(false);
-        button.addActionListener(listener);
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         return button;
     }
 
     private JButton createSmallButton(String text, java.awt.event.ActionListener listener) {
         JButton button = new JButton(text);
         button.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-        button.setForeground(Color.WHITE);
+        button.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
         button.setFocusPainted(false);
-        button.setFont(button.getFont().deriveFont(11f));
+        button.setFont(button.getFont().deriveFont(10f));
+        button.setMargin(new Insets(2, 4, 2, 4));
+        button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         button.addActionListener(listener);
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        return button;
-    }
-
-    private JButton createLinkButton(String text, java.awt.event.ActionListener listener) {
-        JButton button = new JButton("<html><u>" + text + "</u></html>");
-        button.setAlignmentX(Component.LEFT_ALIGNMENT);
-        button.setMaximumSize(new Dimension(Integer.MAX_VALUE, 24));
-        button.setBackground(ColorScheme.DARK_GRAY_COLOR);
-        button.setForeground(new Color(100, 149, 237)); // Cornflower blue
-        button.setFocusPainted(false);
-        button.setBorderPainted(false);
-        button.setContentAreaFilled(false);
-        button.setHorizontalAlignment(SwingConstants.LEFT);
-        button.addActionListener(listener);
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
         return button;
     }
 
@@ -319,33 +255,30 @@ public class ClaudeExportPanel extends PluginPanel {
         );
     }
 
-    private void showSuccess(String message) {
-        statusLabel.setText(message);
-        statusLabel.setForeground(SUCCESS_GREEN);
-        resetStatusAfterDelay();
-    }
+    private void showButtonFeedback(JButton button, String message) {
+        String original = button.getText();
+        Color originalBg = button.getBackground();
 
-    private void showError(String message) {
-        statusLabel.setText(message);
-        statusLabel.setForeground(new Color(244, 67, 54)); // Red
-        resetStatusAfterDelay();
-    }
+        button.setText(message);
+        button.setBackground(new Color(76, 175, 80));
+        button.setEnabled(false);
 
-    private void resetStatusAfterDelay() {
-        if (statusResetTimer != null) {
-            statusResetTimer.stop();
-        }
-        statusResetTimer = new Timer(3000, e -> {
-            statusLabel.setText("Ready to export");
-            statusLabel.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+        Timer timer = new Timer(1200, e -> {
+            button.setText(original);
+            button.setBackground(originalBg);
+            button.setEnabled(true);
         });
-        statusResetTimer.setRepeats(false);
-        statusResetTimer.start();
+        timer.setRepeats(false);
+        timer.start();
     }
 
-    /**
-     * Update the last export label - called from plugin
-     */
+    private void updateStatus(String message) {
+        statusLabel.setText(message);
+        Timer timer = new Timer(2000, e -> statusLabel.setText("Ready"));
+        timer.setRepeats(false);
+        timer.start();
+    }
+
     public void updateLastExportLabel() {
         SwingUtilities.invokeLater(() -> {
             lastExportLabel.setText("Last export: " + plugin.getFormattedLastExportTime());

@@ -117,23 +117,29 @@ Based on my current stats, quest progress, and gear, can you help me with:
 4. Any account goals or milestones I should aim for?
 ```
 
-## MCP Server Integration
+## Claude Desktop Integration (MCP)
 
-For real-time integration with Claude Desktop, this plugin works with MCP (Model Context Protocol) servers.
+For real-time integration with Claude Desktop, you can set up an MCP server that reads the exported data files. This allows Claude to access your live OSRS account data during conversations.
+
+**[View Full MCP Setup Guide](MCP_SETUP.md)**
 
 ### How It Works
+
+```
+RuneLite + Plugin  ──►  JSON Files  ◄──  Claude Desktop + MCP Server
+```
 
 1. This plugin exports data to `~/.runelite/claude-export/`
 2. An MCP server reads these JSON files
 3. Claude Desktop connects to the MCP server
 4. Claude can access your live OSRS data during conversations
 
-### Setting Up MCP
+### With MCP Integration, You Can Ask Claude:
 
-1. Install the companion MCP server (see plugin settings for repository link)
-2. Configure Claude Desktop to use the MCP server
-3. Enable auto-export in plugin settings
-4. Claude can now read your game data in real-time!
+- "What quests can I do with my current stats?"
+- "Do I have the items needed for Dragon Slayer?"
+- "What's my total bank value?"
+- "Based on my levels, what should I train next?"
 
 ## Configuration
 

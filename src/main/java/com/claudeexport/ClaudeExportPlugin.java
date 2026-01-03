@@ -19,6 +19,11 @@ import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.util.ImageUtil;
 
 import javax.inject.Inject;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileWriter;
@@ -78,10 +83,10 @@ public class ClaudeExportPlugin extends Plugin {
         panel = new ClaudeExportPanel(this);
 
         // Create navigation button with custom icon
-        final BufferedImage icon = ImageUtil.loadImageResource(getClass(), "/claude_icon.png");
+        final BufferedImage icon = createPluginIcon();
         navButton = NavigationButton.builder()
             .tooltip("Claude Export")
-            .icon(icon != null ? icon : new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB))
+            .icon(icon)
             .priority(10)
             .panel(panel)
             .build();
@@ -93,6 +98,34 @@ public class ClaudeExportPlugin extends Plugin {
     protected void shutDown() throws Exception {
         log.info("Claude Export plugin stopped");
         clientToolbar.removeNavigation(navButton);
+    }
+
+    /**
+     * Create a document-style plugin icon with Claude orange accent
+     */
+    private BufferedImage createPluginIcon() {
+        BufferedImage icon = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2d = icon.createGraphics();
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        // Document background (light gray)
+        g2d.setColor(new Color(200, 200, 200));
+        g2d.fillRoundRect(2, 1, 12, 14, 2, 2);
+
+        // Document lines (representing data)
+        g2d.setColor(new Color(120, 120, 120));
+        g2d.fillRect(4, 4, 8, 1);
+        g2d.fillRect(4, 7, 8, 1);
+        g2d.fillRect(4, 10, 6, 1);
+
+        // Claude orange accent (top-right corner fold)
+        g2d.setColor(new Color(232, 148, 106));
+        int[] xPoints = {10, 14, 14};
+        int[] yPoints = {1, 1, 5};
+        g2d.fillPolygon(xPoints, yPoints, 3);
+
+        g2d.dispose();
+        return icon;
     }
 
     @Provides
@@ -570,38 +603,40 @@ public class ClaudeExportPlugin extends Plugin {
         String username = getUsername();
 
         // Header
-        sb.append("=== OSRS Account Summary for Claude ===\n");
-        sb.append(String.format("Username: %s\n", username));
-        sb.append(String.format("Total Level: %d\n", getTotalLevel()));
-        sb.append(String.format("Combat Level: %d\n\n", getCombatLevel()));
+        sb.append(String.format("=== OSRS Account: %s ===\n", username));
+        sb.append(String.format("Combat Level: %d | Total Level: %d\n\n", getCombatLevel(), getTotalLevel()));
 
-        // Skills in compact format
+        // Skills - combat first, then others
         sb.append("SKILLS:\n");
-        String[] combatSkills = {"Attack", "Strength", "Defence", "Hitpoints", "Ranged", "Prayer", "Magic"};
-        StringBuilder combatLine = new StringBuilder();
-        for (String skillName : combatSkills) {
-            Skill skill = Skill.valueOf(skillName.toUpperCase());
-            combatLine.append(String.format("%s %d | ", skillName, client.getRealSkillLevel(skill)));
-        }
-        sb.append(combatLine.toString().replaceAll(" \\| $", "\n"));
-
-        String[] otherSkills = {"Cooking", "Woodcutting", "Fletching", "Fishing", "Firemaking", "Crafting", "Smithing",
-            "Mining", "Herblore", "Agility", "Thieving", "Slayer", "Farming", "Runecraft", "Hunter", "Construction"};
-        StringBuilder otherLine = new StringBuilder();
-        int count = 0;
-        for (String skillName : otherSkills) {
-            Skill skill = Skill.valueOf(skillName.toUpperCase());
-            otherLine.append(String.format("%s %d | ", skillName, client.getRealSkillLevel(skill)));
-            count++;
-            if (count % 4 == 0) {
-                sb.append(otherLine.toString().replaceAll(" \\| $", "\n"));
-                otherLine = new StringBuilder();
-            }
-        }
-        if (otherLine.length() > 0) {
-            sb.append(otherLine.toString().replaceAll(" \\| $", "\n"));
-        }
-        sb.append("\n");
+        sb.append(String.format("Attack %d | Strength %d | Defence %d | Hitpoints %d | Prayer %d\n",
+            client.getRealSkillLevel(Skill.ATTACK),
+            client.getRealSkillLevel(Skill.STRENGTH),
+            client.getRealSkillLevel(Skill.DEFENCE),
+            client.getRealSkillLevel(Skill.HITPOINTS),
+            client.getRealSkillLevel(Skill.PRAYER)));
+        sb.append(String.format("Ranged %d | Magic %d\n",
+            client.getRealSkillLevel(Skill.RANGED),
+            client.getRealSkillLevel(Skill.MAGIC)));
+        sb.append(String.format("Mining %d | Smithing %d | Fishing %d | Cooking %d | Firemaking %d\n",
+            client.getRealSkillLevel(Skill.MINING),
+            client.getRealSkillLevel(Skill.SMITHING),
+            client.getRealSkillLevel(Skill.FISHING),
+            client.getRealSkillLevel(Skill.COOKING),
+            client.getRealSkillLevel(Skill.FIREMAKING)));
+        sb.append(String.format("Woodcutting %d | Crafting %d | Fletching %d | Runecraft %d\n",
+            client.getRealSkillLevel(Skill.WOODCUTTING),
+            client.getRealSkillLevel(Skill.CRAFTING),
+            client.getRealSkillLevel(Skill.FLETCHING),
+            client.getRealSkillLevel(Skill.RUNECRAFT)));
+        sb.append(String.format("Agility %d | Herblore %d | Thieving %d | Slayer %d\n",
+            client.getRealSkillLevel(Skill.AGILITY),
+            client.getRealSkillLevel(Skill.HERBLORE),
+            client.getRealSkillLevel(Skill.THIEVING),
+            client.getRealSkillLevel(Skill.SLAYER)));
+        sb.append(String.format("Farming %d | Hunter %d | Construction %d\n\n",
+            client.getRealSkillLevel(Skill.FARMING),
+            client.getRealSkillLevel(Skill.HUNTER),
+            client.getRealSkillLevel(Skill.CONSTRUCTION)));
 
         // Quest summary
         Map<String, Object> questData = getQuestData();
@@ -619,54 +654,48 @@ public class ClaudeExportPlugin extends Plugin {
             }
         }
 
-        sb.append(String.format("COMPLETED QUESTS (%d):\n", completed.size()));
-        sb.append(String.join(", ", completed.subList(0, Math.min(10, completed.size()))));
-        if (completed.size() > 10) {
-            sb.append(String.format("... and %d more", completed.size() - 10));
-        }
-        sb.append("\n\n");
+        int notStarted = quests.size() - completed.size() - inProgress.size();
+        sb.append(String.format("QUESTS: %d completed, %d in progress, %d not started\n",
+            completed.size(), inProgress.size(), notStarted));
 
-        if (!inProgress.isEmpty()) {
-            sb.append(String.format("IN PROGRESS (%d):\n", inProgress.size()));
-            sb.append(String.join(", ", inProgress));
-            sb.append("\n\n");
-        }
-
-        // Bank summary
-        Map<String, Object> bankData = getBankData();
-        @SuppressWarnings("unchecked")
-        List<Map<String, Object>> bankItems = (List<Map<String, Object>>) bankData.get("items");
-        sb.append("BANK SUMMARY:\n");
-        sb.append(String.format("Total Value: ~%s GP\n", formatNumber((Long) bankData.get("totalValue"))));
-        sb.append(String.format("Total Items: %d unique stacks\n", bankItems.size()));
-
-        // Show top 5 most valuable items
-        if (!bankItems.isEmpty() && config.includeGePrices()) {
-            bankItems.sort((a, b) -> {
-                long valA = ((Number) a.get("price")).longValue() * ((Number) a.get("quantity")).longValue();
-                long valB = ((Number) b.get("price")).longValue() * ((Number) b.get("quantity")).longValue();
-                return Long.compare(valB, valA);
-            });
-            sb.append("Notable Items: ");
-            List<String> notable = new ArrayList<>();
-            for (int i = 0; i < Math.min(5, bankItems.size()); i++) {
-                Map<String, Object> item = bankItems.get(i);
-                int qty = ((Number) item.get("quantity")).intValue();
-                String name = (String) item.get("name");
-                notable.add(qty > 1 ? name + " x" + qty : name);
+        if (!completed.isEmpty()) {
+            sb.append("Completed: ");
+            sb.append(String.join(", ", completed.subList(0, Math.min(8, completed.size()))));
+            if (completed.size() > 8) {
+                sb.append("...");
             }
-            sb.append(String.join(", ", notable));
+            sb.append("\n");
+        }
+        if (!inProgress.isEmpty()) {
+            sb.append("In Progress: ");
+            sb.append(String.join(", ", inProgress));
             sb.append("\n");
         }
         sb.append("\n");
+
+        // Equipment - only show equipped items
+        Map<String, Object> equipData = getEquipmentData();
+        @SuppressWarnings("unchecked")
+        Map<String, Object> slots = (Map<String, Object>) equipData.get("slots");
+        List<String> equipped = new ArrayList<>();
+        for (Map.Entry<String, Object> entry : slots.entrySet()) {
+            if (entry.getValue() != null) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> item = (Map<String, Object>) entry.getValue();
+                equipped.add((String) item.get("name"));
+            }
+        }
+        sb.append("EQUIPMENT: ");
+        sb.append(equipped.isEmpty() ? "Nothing equipped" : String.join(", ", equipped));
+        sb.append("\n\n");
 
         // Current inventory
         Map<String, Object> invData = getInventoryData();
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> invItems = (List<Map<String, Object>>) invData.get("items");
-        sb.append("CURRENT INVENTORY:\n");
+        sb.append("INVENTORY: ");
         if (invItems.isEmpty()) {
-            sb.append("Empty\n");
+            sb.append("Empty");
         } else {
             List<String> invList = new ArrayList<>();
             for (Map<String, Object> item : invItems) {
@@ -675,28 +704,16 @@ public class ClaudeExportPlugin extends Plugin {
                 invList.add(qty > 1 ? name + " (" + formatNumber(qty) + ")" : name);
             }
             sb.append(String.join(", ", invList));
-            sb.append("\n");
         }
-        sb.append("\n");
+        sb.append("\n\n");
 
-        // Equipment
-        Map<String, Object> equipData = getEquipmentData();
+        // Bank summary
+        Map<String, Object> bankData = getBankData();
         @SuppressWarnings("unchecked")
-        Map<String, Object> slots = (Map<String, Object>) equipData.get("slots");
-        sb.append("EQUIPPED GEAR:\n");
-        List<String> equipped = new ArrayList<>();
-        for (Map.Entry<String, Object> entry : slots.entrySet()) {
-            String slotName = entry.getKey().substring(0, 1).toUpperCase() + entry.getKey().substring(1);
-            if (entry.getValue() != null) {
-                @SuppressWarnings("unchecked")
-                Map<String, Object> item = (Map<String, Object>) entry.getValue();
-                equipped.add(slotName + ": " + item.get("name"));
-            } else {
-                equipped.add(slotName + ": None");
-            }
-        }
-        sb.append(String.join(", ", equipped));
-        sb.append("\n");
+        List<Map<String, Object>> bankItems = (List<Map<String, Object>>) bankData.get("items");
+        sb.append(String.format("BANK: %d items, ~%s GP total value",
+            bankItems.size(),
+            formatNumber((Long) bankData.get("totalValue"))));
 
         return sb.toString();
     }
@@ -705,15 +722,40 @@ public class ClaudeExportPlugin extends Plugin {
      * Generate a starter prompt for Claude
      */
     public String generateClaudePrompt() {
-        String summary = generateClaudeSummary();
+        if (client.getGameState() != GameState.LOGGED_IN) {
+            return "Error: Not logged in to OSRS";
+        }
 
-        return "Here is my OSRS (Old School RuneScape) account data. I'm looking for advice to improve my account.\n\n" +
-            summary + "\n\n" +
-            "Based on my current stats, quest progress, and gear, can you help me with:\n" +
-            "1. What quests should I prioritize next for good rewards?\n" +
-            "2. Any gear upgrades I should work toward given my levels?\n" +
-            "3. Efficient training methods for skills I should focus on?\n" +
-            "4. Any account goals or milestones I should aim for?";
+        StringBuilder sb = new StringBuilder();
+        sb.append("I'm playing Old School RuneScape and would like some advice based on my account.\n\n");
+        sb.append(String.format("Here's my current status:\n"));
+        sb.append(String.format("- Combat Level: %d, Total Level: %d\n", getCombatLevel(), getTotalLevel()));
+
+        // Find highest skills
+        List<String> highSkills = new ArrayList<>();
+        for (Skill skill : Skill.values()) {
+            if (skill != Skill.OVERALL) {
+                int level = client.getRealSkillLevel(skill);
+                if (level >= 50) {
+                    highSkills.add(skill.getName() + " (" + level + ")");
+                }
+            }
+        }
+        if (!highSkills.isEmpty()) {
+            sb.append("- Highest skills: ").append(String.join(", ", highSkills.subList(0, Math.min(5, highSkills.size())))).append("\n");
+        }
+
+        Map<String, Object> questData = getQuestData();
+        sb.append(String.format("- Quests completed: %d/%d\n\n", questData.get("completed"), questData.get("total")));
+
+        sb.append(generateClaudeSummary());
+        sb.append("\n\n");
+        sb.append("Based on my stats and progress, can you help me with:\n");
+        sb.append("1. What quests should I prioritize next?\n");
+        sb.append("2. What gear upgrades would benefit me most?\n");
+        sb.append("3. Any training recommendations?");
+
+        return sb.toString();
     }
 
     /**
